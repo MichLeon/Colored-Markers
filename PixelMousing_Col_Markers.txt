@@ -1,0 +1,122 @@
+﻿#NoEnv					; Recommended for performance and compatibility with future AutoHotkey releases.
+#Warn					; Enable warnings to assist with detecting common errors.
+SendMode Input				; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir %A_ScriptDir%		; Ensures a consistent starting directory.
+#SingleInstance force			; Replaces script (Reloads).
+#Persistent				; to make it run indefinitely
+#IfWinActive ahk_exe S:\MuseScore 3.6.2 portable\MuseScorePortable\App\MuseScore\bin\MuseScore3.exe	; Enables Hotkeys when MuseScore3 Window is Active
+
+; Replace the path S:\etc. with your location of MuseScore3.exe
+
+; ======================== CAPSLOCK TOGGLE and COPY COORDINATES =========================
+
+SetTimer, ShowCoordinates, 0			; "0" updates position instantly
+Return
+ShowCoordinates:				; label of SetTimer
+if !GetKeyState("CapsLock", "T")		; whether capslock is on or off
+{
+    ToolTip, , , , 1				; if off, don't show tooltip (1) at all
+}
+else
+{						; if on
+    CoordMode, ToolTip, Screen			; makes tooltip to appear at position relative to screen
+    CoordMode, Mouse, Window			; makes mouse coordinates to be relative to active window
+    MouseGetPos, xx, yy				; get mouse x and y position, store as %xx% and %yy%
+    ToolTip, %xx% %yy%, A_ScreenWidth/2, 22, 1	; (1) display tooltip of %xx% %yy% halfway top of screen, a bit under macro group tooltips
+    ~/ & c::
+    Clipboard = %xx% %yy%			; store coordinates in clipboard
+    Return
+}
+Return
+
+; ================================= PIXELMOUSING ========================================
+; NB: selected language is English - US keyboard
+; speed: 100 is slowest, 0 is instantly
+; R = movement relative to mouseposition
+
+~/ & u::					; when you press / + u
+MouseMove, 0, -25, 100, R			; the mouse will move up 25 pixels
+Return
+
+~/ & d::					; when you press / + d
+MouseMove, 0, 25, 100, R			; the mouse will move down 25 pixels
+Return
+
+~/ & l::					; when you press / + l
+MouseMove, -25, 0, 100, R			; the mouse will move left 25 pixels
+Return
+
+~/ & r::					; when you press / + r
+MouseMove, 25, 0, 100, R			; the mouse will move right 25 pixels
+Return
+
+~/ & Left::					; when you press / + left
+MouseMove, -1, 0, 100, R			; the mouse will move left 1 px
+Return
+
+~/ & Right::					; when you press / + right
+MouseMove, 1, 0, 100, R				; the mouse will move right 1 px
+Return
+
+~/ & Up::					; when you press / + up
+MouseMove, 0, -1, 100, R			; the mouse will move up 1 px
+Return
+
+~/ & Down::					; when you press / + down
+MouseMove, 0, 1, 100, R				; the mouse will move down 1 px
+Return
+
+~/ & ,::					; when you press / + comma
+Send {Click}					; the mouse will left click
+Return
+
+~/ & .::					; when you press / + .
+Send {Click, right}				; the mouse will right click
+Return
+
+~/ & n::					; when you press / + n
+SendEvent {Click, down}				; click and hold down
+Return						; drag enable
+
+~/ & m::					; when you press / + m
+SendEvent {Click, up}				; release the mouse button
+Return
+
+; ====================================== HELP ===========================================
+
+~/ & h::					; open help info
+MsgBox, 4096, PixelMousing,
+(
+Coordinates are relative
+to the active window
+
+Show/hide	CapsLock
+Copy		/ + C
+
+Move the mouse:     1 px slow
+
+Up		/ + Up
+Down		/ + Down
+Left		/ + Left
+Right		/ + Right
+
+Move the mouse:     25 px slow
+
+Up		/ + U
+Down		/ + D
+Left		/ + L
+Right		/ + R
+
+Left Click		/ + ,
+Right Click	/ + .
+Drag enable	/ + N
+Drag disable	/ + M
+)
+Return
+; ====================================== EXIT ===========================================
+
+~/ & e::
+MsgBox, 4132, PixelMousing, Are you sure you want to exit?
+IfMsgBox, Yes
+ExitApp
+Return
