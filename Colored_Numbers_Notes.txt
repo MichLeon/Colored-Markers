@@ -1,0 +1,625 @@
+﻿#NoEnv  			; Recommended for performance and compatibility with future AutoHotkey releases.
+#Warn  				; Enable warnings to assist with detecting common errors.
+SendMode Input  		; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir %A_ScriptDir% 	; Ensures a consistent starting directory.
+#SingleInstance force		; Replaces script (Reloads).
+#Persistent			; to make it run indefinitely
+#IfWinActive ahk_exe S:\MuseScore 3.6.2 portable\MuseScorePortable\App\MuseScore\bin\MuseScore3.exe	; Enables Hotkeys when MuseScore3 Window is Active
+
+; replace the path S:\etc. with your location of MuseScore3.exe
+; 'liberate' the prefix keys: '/' and 'O'
+; lines you may want to change are marked (*change*?) 
+; to start these macros: select the .ahk file and press Enter
+; to exit this script go to the system tray (Win logo key + B), rightclick the icon -> Exit
+; to see the macros at work: go to the system tray, doubleclick the icon, choose a view
+
+CoordMode, Tooltip, Screen
+Tooltip, Color Info O + H, A_Screenwidth/2, 0, 1		; macro group active - position (*change*?) 
+
+ColorNumber := 1
+ColorNumberOld := ColorNumber
+Number_Text := "cn-1-"
+Toggle_ColSearch := 0
+SearchColor := "#b30fc8"		; colornr. 1 - electric violet
+SearchColorOld := SearchColor
+SearchDir := "Right"
+SearchColor_1 := "#b30fc8"		; electric violet
+SearchColor_2 := "#919cb4"		; grayish blue
+SearchColor_3 := "#00d100"		; strong lime green
+SearchColor_4 := "#10ffaa"		; lime green
+SearchColor_5 := "#006cc8"		; strong blue
+SearchColor_6 := "#fda900"		; pure (or mostly pure) orange
+SearchColor_7 := "#fa1000"		; pure (or mostly pure) red
+SearchColor_8 := "#5040a0"		; crail
+SearchColor_9 := "#d020a0"		; strong pink
+SearchColor_10 := "#e01040"		; vivid red
+SearchColor_11 := "#f09010"		; vivid orange
+SearchColor_12 := "#0a0fff"		; vivid blue
+SearchColor_13 := "#90e040"		; bright green
+SearchColor_14 := "#00a0a0"		; dark cyan
+SearchColor_15 := "#a0a0a4"		; after default installation of MuseScore: greyish LBC Color - Layout Break Color HTML format
+ColorLBC := 0xa0a0a4			; greyish LBC Color - AHK format - check this in Preferences -> Advanced ui/score/layoutBreakColor
+ColorBackground := 0xddd6d8		; color between odd/even pages in Page View
+
+; when in the Defined State: determine the size and position of the InputBox in the docked Inspector
+W_IB := 289		; Width of InputBox 'Set Marker Color' in Inspector
+H_IB := 100		; Height of InputBox
+IB_X := 1635		; Upper-left corner X InputBox
+IB_Y := 806		; Upper-left corner Y InputBox
+
+; Canvas Search Area -  where to find the colors?
+CSA_X1 := 120		; canvas search area upper-left corner
+CSA_Y1 := 55
+CSA_X2 := 1633		; canvas search area lower-right corner
+CSA_Y2 := 1052
+
+; when in the Defined State: determine the coordinates of the Statusbar search area
+SB_X1 := 0		; extreme left border
+SB_Y1 := 1038		; set the height so that the surface can accomodate 2 stacked statusbars
+SB_X2 := 237		; this is needed because in some situations the statusbar can get an extra line
+SB_Y2 := 1079		; in full screen this coordinate is the height (Y- resolution) of your screen minus 1 (pixel zero is the first pixel)
+SB_Wide_X2 := 710	; includes the 'duration percentages' of the Piano Roll Editor
+
+
+; create these images, name them as indicated and put them in the working directory
+; Statusbar_Voice1.png			search area Statusbar (uses SB_Wide_X2)
+; Statusbar_Text.png			search area Statusbar (uses SB_X2
+; MuseScore_logo_round.jpg		SplashImage - see example in pdf
+; IM_01_Inspector_Inspector.png		search area see below
+; Screen_Text_edit_mode.png		search area see below
+
+; IM_01_Inspector_Inspector.png - check of defined state
+IM_01_X1 := 1639	; upper-left corner of search area X
+IM_01_Y1 := 23		; idem Y
+IM_01_X2 := 1697	; lower-right corner of search area X
+IM_01_Y2 := 43		; idem Y
+
+; when in the Defined State: determine the coordinates of the Screen_Text_edit_mode.png
+TxtEdit_X1 := 1769
+TxtEdit_Y1 := 1060
+TxtEdit_X2 := 1879
+TxtEdit_Y2 := 1079
+
+; when in the Defined State: determine the coordinates of these hotspots
+IN_012_X := 1862	; I(012) color picker rectangle (black) X must overlap 3 situations
+IN_012_Y := 86		; OVERLAP all ELEMENTS - select dynamic, note, note anchored line: one X-coordinate for 3 situations
+
+IN_013_X := 1905	; I(013) Reset (012) color elements
+IN_013_Y := 86		; WITHOUT a Style button in Inspector
+
+; defined state: to reset the inspector width
+; Determine the desired X-coordinate of the Defined Inspector width by a separator shift to the left
+; starting at the right of the separator
+; for maximum precision use the tool PixelMousing for this job
+
+Min_Insp_Width := 1852		; my found minimal Inspector width (Inspector docked)
+Def_Insp_Width := 1640		; my defined Inspector width
+ToolTip , ◄ Separator x = %Def_Insp_Width%, Def_Insp_Width, 0, 2	; inspector (y=0)  (*change*?)
+
+; ♣========================================= RELOAD ===============================================
+; useful while editing this file - when readyt outcomment it with semicolon and space
+
+^!r::reload			; Control + Alt + R
+
+; ♣======================================= HELP SCREEN ============================================
+
+; the 'exit PixelMousing command' is in PixelMousing_Col_Markers.ahk
+
+~o & h::				; info 
+MsgBox, 4096, Colored Markers: Numbers - Notes,
+(
+Inputbox set color 1...15		O + =
+Help: Inputbox press		Enter
+
+Reset width inspector		/ + W
+Get color mouseposition		/ + Q
+Load PixelMousing		/ + P
+Help PixelMousing		/ + H
+Exit PixelMousing			/ + E
+)
+Return
+
+~/ & p::		; 
+Run, PixelMousing_Col_Markers.ahk, , UseErrorLevel
+if (ErrorLevel = "Error")
+MsgBox, 4112, Start PixelMousing,
+(
+PixelMousing could not be launched.
+Check name and location of the file.
+)
+Return
+
+; ♣======================================== SET COLOR =============================================
+
+; all colors but 4 and 12 match notepitch color schemes: ColorNotes_tpc.qml
+; resp. Boomwhackers convention - https://musescore.org/en/project/colornotestpc
+; the macro produces the Number_Text automatically
+; In the palette cell properties of the colored numbers we have
+; CN-1-  CN-2-  CN-3-  CN-4-  CN-5-  CN-6-  CN-7-  CN-8-  CN-9-  CN-10-  CN-11-  CN-12-  CN-13-  CN-14-  CN-15-
+
+
+~o & =::					; set color
+InputBox, ColorNumber, Set Marker Color, , , W_IB, H_IB, IB_X, IB_Y, , , Help = ?    Input 1 ... 14      'Invisible' = 15	;  (*change*?) InputBox positioned in Inspector area
+If ErrorLevel {				; when Cancel is pressed
+    ColorNumber := ColorNumberOld
+    Return
+}
+If ColorNumber contains ?
+{
+    MsgBox, 4096, Colored Markers: Numbers and Notes,
+(
+Inputbox set color 1...15 *		O + =
+Create colored marker: number	O + -
+Create colored marker: note		O + Backspace
+Search colored marker		O + 0
+Search all colors 1...14 - loop	O + Home
+Input 15 and search color 15 - loop	O + Home
+Set search direction right		O + ]
+Set search direction left		O + [
+Reset color			O + R
+
+* Color 15 is 'invisible' color
+
+The active color is # %ColorNumberOld%.
+)
+    ColorNumber := ColorNumberOld
+    SearchColor := SearchColorOld
+    Return
+}
+If (ColorNumber = "=") {
+    MsgBox, 4144, Set Color, The active color is # %ColorNumberOld%.
+    ColorNumber := ColorNumberOld
+    Return
+}
+If (ColorNumber > 15) {
+    MsgBox, 4144, Set Color %ColorNumber%, Invalid input!`nEnter 1`,2`,3 ... 15.
+    ColorNumber := ColorNumberOld
+    Return
+}
+If ColorNumber is not integer
+{
+    MsgBox, 4144, Set Color %ColorNumber%, Invalid input!`nEnter 1`,2`,3 ... 15.
+    ColorNumber := ColorNumberOld
+    Return
+}
+If ColorNumber is integer
+    ColorNumberOld := ColorNumber
+If (ColorNumberOld = 1)
+    SearchColor := SearchColor_1	; electric violet
+If (ColorNumberOld = 2)
+    SearchColor := SearchColor_2	; grayish blue
+If (ColorNumberOld = 3)
+    SearchColor := SearchColor_3	; strong lime green
+If (ColorNumberOld = 4)
+    SearchColor := SearchColor_4	; lime green - was in colorscheme #fcfc00 - pure (or mostly pure) yellow
+If (ColorNumberOld = 5)
+    SearchColor := SearchColor_5	; strong blue
+If (ColorNumberOld = 6)
+    SearchColor := SearchColor_6	; pure (or mostly pure) orange
+If (ColorNumberOld = 7)
+    SearchColor := SearchColor_7	; pure (or mostly pure) red
+If (ColorNumberOld = 8)
+    SearchColor := SearchColor_8	; crail
+If (ColorNumberOld = 9)
+    SearchColor := SearchColor_9	; strong pink
+If (ColorNumberOld = 10)
+    SearchColor := SearchColor_10	; vivid red
+If (ColorNumberOld = 11)
+    SearchColor := SearchColor_11	; vivid orange
+If (ColorNumberOld = 12)
+    SearchColor := SearchColor_12	; vivid blue - was in colorscheme  #fcfc00 - pure (or mostly pure) yellow
+If (ColorNumberOld = 13)
+    SearchColor := SearchColor_13	; bright green
+If (ColorNumberOld = 14)
+    SearchColor := SearchColor_14	; dark cyan
+If (ColorNumberOld = 15)
+    SearchColor := SearchColor_15	; LBC color - grey color of invisible elements
+Number_Text := "cn-" ColorNumberOld "-"
+; MsgBox, 4096, Test, SearchColor is %SearchColor%`nNumber_Text is %Number_Text%
+ColorNumber := ColorNumberOld
+SearchColorOld := SearchColor
+Return
+
+; ♣================================== CREATE COLORED NUMBERS ======================================
+
+; https://musescore.org/en/handbook/3/text-styles-and-properties
+; https://musescore.org/en/handbook/3/layout-and-formatting#save-and-load-style
+; https://musescore.org/en/handbook/3/palettes#create-new-palette
+; https://musescore.org/en/handbook/3/palettes#custom-palettes - notice Cell Properties - Name:
+; create a user text style 'Colored Numbers'
+; set the style to font Edwin, bold, 12pt, independent on staff size
+; create the numbers 1....15 as staff text and set their style to 'Colored Numbers'
+; in the color picker: create color number 1 by pressing Alt + H and enter #b30fc8 (NB: SearchColor_1 := "#b30fc8")
+; do the same for the numbers 2....15
+; create a new palette and name it 'Colored Numbers'
+; add the colored numbers to the palette
+; right-click the cell '1' and click properties; give it the name 'cn-1-'
+; do the same for the cells '2' thru '15'; give them the names 'cn-2-' ... 'cn-15-'
+; save the palette as an .mpal file e.g as 'Col_Numbers.mpal'
+
+; on the testscreen 1920 x 1080 - Page Settings default sp = 1.750mm/0.069inch
+; with bold 12pt all numbers will be found at zoomfactor 100%
+; with bold 14pt all numbers will be found at zoomfactor 80%
+; with bold 16pt all numbers will be found at zoomfactor 70%
+; with bold 18pt all numbers will be found at zoomfactor 60%
+; depending on the number: some numbers will still be found at a lower zoomfactor
+; to change the properties: rightclick a colored number -> select More -> same subtype
+; or change the 'Colored Numbers' user style
+
+; advantage of using colored numbers: you can manage them all at once e.g. setting them 'invisible' 
+; advantage of using colored notes of head type quarter: they are already found at zoomfactor 45%
+
+; when there are more matching colors on the screen the pixelsearch command finds the highest one
+; the search will be conducted from left to right, starting at CSA_X1, CSA_Y1 the canvas search area upper-left corner
+
+~o & -::				; create colored marker numbers
+Gosub, InspectorCheck			; subroutine at end of script
+ImageSearch, , , SB_X1, SB_Y1, SB_Wide_X2, SB_Y2, *40 Statusbar_Voice1.png
+If (ErrorLevel = 1) {
+    MsgBox, 4144, Create Colored Numbers, Select a note or rest in voice 1.
+    Return
+}
+Send ^{F9}				; Palette Search (Ctrl + F9) (*change*?)
+Sleep, 100
+Send %Number_Text%
+Sleep, 100
+Send ^!p				; MSc user defined shortcut 'Apply current palette element' (*change*?)
+Sleep, 200
+Return
+
+; ♣==================================== COLOR NOTE or REST ========================================
+
+; on the testscreen 1920 x 1080 colored notes of head type quarter are found at zoomfactor 45%
+; to the colored note (rest) its color number will be attached as a staff text
+
+~o & bs::				; create color marker note/rest in score
+Gosub, InspectorCheck			; subroutine at end of script
+ImageSearch, , , SB_X1, SB_Y1, SB_Wide_X2, SB_Y2, *40 Statusbar_Voice1.png
+If (ErrorLevel = 1) {
+    MsgBox, 4144, Colored Markers, Select a note or rest in voice 1.`nFor searches at small zoomfactors`nselect notes of head type quarter.
+    Return
+}
+Send ^t					; create staff text color nr.
+Sleep, 50
+Send %ColorNumberOld%
+Sleep, 100
+Send {Escape}
+Sleep, 100
+Send !{left}
+Sleep, 600
+Gosub, BackToVoice1			; subroutine at end of script - starts with Sleep 200
+Click, %IN_012_X%, %IN_012_Y%		; I(012) color picker rectangular (black) - OVERLAP all elements
+Sleep, 200
+Send !h					; selects content of searchfield HTML
+Sleep, 50
+Send {Text}%SearchColor%
+Sleep, 50
+; MsgBox, 4096, Create Colored Marker, SearchColor is %SearchColor%				; for testing
+Send {Enter}
+Sleep, 200
+Send {Escape}
+Sleep, 100
+SearchColorNew := StrReplace(SearchColorOld, "#")	; remove # from string
+LoopColor := "0x"SearchColorNew		; change colornr to AHK format
+; MsgBox, 4096, Test, LoopColor is %LoopColor%.
+PixelSearch, X, Y, CSA_X1, CSA_Y1, CSA_X2, CSA_Y2, LoopColor, , Fast RGB
+Click, %X%, %Y%
+Return
+
+; ♣=============================== SET SEARCH DIRECTION ===========================================
+
+; during a search the direction can be changed
+
+~o & ]::SearchDir := "Right"		; set search direction: right
+~o & [::SearchDir := "Left"		; set search direction: left
+
+; ♣================================= SEARCH ONE COLOR =============================================
+
+; in rare circumstances - a big zoom factor - the Background Color will not be immediately found
+; in Page View it will always be found after Control + PgDn followed by Control + PgUp
+
+
+#MaxThreadsPerHotkey 2
+
+~o & 0::				; search colored number, note or rest
+Gosub, InspectorCheck			; subroutine at end of script
+Toggle_ColSearch := !Toggle_ColSearch
+If (Toggle_ColSearch = 0)
+    Goto, LoopColSearchO0
+PixelSearch, X, Y, % CSA_X1, % CSA_Y1, % CSA_X2, % CSA_Y2, ColorBackground, , Fast RGB
+If (ErrorLevel = 1) && (SearchColorOld = SearchColor_15) {
+    MsgBox, 4144, Search 'Invisible' Color, This search can only`nbe performed in Page View.
+    Toggle_ColSearch := 0
+    Return
+}
+If (ErrorLevel = 1)
+    ViewMode := "Continuous"
+If (ErrorLevel = 0)
+    ViewMode := "Page"
+MouseGetPos, StartX, StartY
+SearchColorNew := StrReplace(SearchColorOld, "#")	; remove # from string
+SearchColorNew := "0x"SearchColorNew		; change colornr to AHK format
+LoopColor := SearchColorNew
+LoopColSearchO0:
+Loop
+{
+    If (Toggle_ColSearch = 0)
+        Break
+    If !(SearchColorOld = SearchColor_15)
+        Tooltip, The search direction of Color %ColorNumberOld% is %SearchDir%.`nTo stop the search press  O + 0  again., StartX, StartY + 80, 4	; (*change*?)
+    If (SearchColorOld = SearchColor_15)
+        Tooltip, The search direction of the 'invisible' color is %SearchDir%.`nTo stop the search press  O + 0  again., StartX, StartY + 80, 4		; (*change*?)
+    PixelSearch, X, Y, CSA_X1, CSA_Y1, CSA_X2, CSA_Y2, LoopColor, , Fast RGB
+    If (ErrorLevel = 0)
+    {
+        Toggle_ColSearch := 0
+        Click, %X%, %Y%
+        Sleep, 200
+        ImageSearch, , , TxtEdit_X1, TxtEdit_Y1, TxtEdit_X2, TxtEdit_Y2, *40 Screen_Text_edit_mode.png
+        If (ErrorLevel = 0)
+        {
+            Send {Escape}		; leaving text edit mode
+            Sleep, 100
+        }
+        SplashImage, MuseScore_logo_round.jpg, b fm8 wm1000 ctff0000 , ,  -- Here !, EyeCatcher, Arial
+        WinMove, EyeCatcher, , X, Y
+        Sleep, 300					; shows for 0.3 second
+        SplashImage, Off
+        Break
+    }
+    If (ErrorLevel = 1)
+    {
+        If (SearchDir = "Right") && (ViewMode = "Continuous")
+            Send ^{PgDn}			; in Cont View
+        If (SearchDir = "Right") && (ViewMode = "Page")
+            Send ^{PgDn 2}			; number depends on screen size and zoomfactor (*change*?)
+        If (SearchDir = "Left") && (ViewMode = "Continuous")
+            Send ^{PgUp}			; in Cont View
+        If (SearchDir = "Left")	&&  (ViewMode = "Page")
+            Send ^{PgUp 2}			; number depends on screen size and zoomfactor (*change*?)
+        Sleep, 100
+        Continue
+    }
+}
+Tooltip, , , , 4				; close tooltip (4)
+Return
+
+#MaxThreadsPerHotkey 1
+
+; ♣================================= SEARCH ALL COLORS ============================================
+
+; the macro searches all colors successively from 1 thru 14
+; when there are more markers of the same color on the same screen only one will be found
+; if color #15 - (Layout Break Color) is the active color only this color will be searched
+; NB: color #15 is also the color of system and page breaks
+
+#MaxThreadsPerHotkey 2
+
+~o & Home::				; search all colored notes/rests
+Gosub, InspectorCheck			; subroutine at end of script
+ScreenShift := 1
+Toggle_ColSearch := !Toggle_ColSearch
+If (Toggle_ColSearch = 0) {
+    ScreenShift := 0
+    Tooltip, When tooltip disappears:`nPress Z to finish the search., X, Y + 80, 3	; (*change*?)
+    Goto, LoopColSearchOHome
+}
+PixelSearch, X, Y, % CSA_X1, % CSA_Y1, % CSA_X2, % CSA_Y2, ColorBackground, , Fast RGB
+If (ErrorLevel = 1)
+    ViewMode := "Continuous"
+If (ErrorLevel = 1) && (SearchColorOld = SearchColor_15) {
+    MsgBox, 4144, Search 'Invisible' Color, This search can only`nbe performed in Page View.
+    Toggle_ColSearch := 0
+    Return
+}
+If (ErrorLevel = 0)
+    ViewMode := "Page"
+LoopColSearchOHome:
+Loop
+{
+    If (Toggle_ColSearch = 0)
+        Break
+    Loop
+    {
+        If (Toggle_ColSearch = 0)
+            Break
+        If (SearchColorOld = SearchColor_15)
+        {
+            LoopColor := SearchColor_15
+            Goto, SkipColors0Home
+        }
+        If (A_Index = 1)
+            LoopColor := SearchColor_1		; electric violet
+        If (A_Index = 2)
+            LoopColor := SearchColor_2		; grayish blue
+        If (A_Index = 3)
+            LoopColor := SearchColor_3		; strong lime green
+        If (A_Index = 4)
+            LoopColor := SearchColor_4		; lime green
+        If (A_Index = 5)
+            LoopColor := SearchColor_5		; strong blue
+        If (A_Index = 6)
+            LoopColor := SearchColor_6		; pure (or mostly pure) orange
+        If (A_Index = 7)
+            LoopColor := SearchColor_7		; pure (or mostly pure) red
+        If (A_Index = 8)
+            LoopColor := SearchColor_8		; crail
+        If (A_Index = 9)
+            LoopColor := SearchColor_9		; strong pink
+        If (A_Index = 10)
+            LoopColor := SearchColor_10		; vivid red
+        If (A_Index = 11)
+            LoopColor := SearchColor_11		; vivid orange
+        If (A_Index = 12)
+            LoopColor := SearchColor_12		; vivid blue
+        If (A_Index = 13)
+            LoopColor := SearchColor_13		; bright green
+        If (A_Index = 14)
+            LoopColor := SearchColor_14		; dark cyan
+        SkipColors0Home:
+        SearchColorNew := StrReplace(LoopColor, "#")	; remove # from string
+        SearchColorNew := "0x"SearchColorNew		; change colornr to AHK format
+        LoopColor := SearchColorNew
+        PixelSearch, X, Y, % CSA_X1, % CSA_Y1, % CSA_X2, % CSA_Y2, LoopColor, , Fast RGB
+        If (ErrorLevel = 1) && !(LoopColor = ColorLBC)
+        {
+            If (A_Index < 14)
+                Continue
+            If (A_Index = 14)
+                Break
+        }
+        If (ErrorLevel = 1) && (LoopColor = ColorLBC)
+            Break
+        If (ErrorLevel = 0)
+        {
+            Click, %X%, %Y%
+            Sleep, 200
+            ImageSearch, , , TxtEdit_X1, TxtEdit_Y1, TxtEdit_X2, TxtEdit_Y2, *40 Screen_Text_edit_mode.png
+            If (ErrorLevel = 0)
+            {
+                Send {Escape}		; leaving text edit mode
+                Sleep, 100
+            }
+            If !(LoopColor = ColorLBC)
+                Tooltip, The last found color is # %A_Index%.`nThe search direction is %SearchDir%.`nPress Z to continue.`nTo stop the search:`nPress O + Home and then Z., X, Y + 80, 4	; (*change*?)
+            If (LoopColor = ColorLBC)
+                Tooltip, 'Invisible' colored element found.`nThe search direction is %SearchDir%.`nPress Z to continue.`nTo stop the search:`nPress O + Home and then Z., X, Y + 80, 4		; (*change*?)
+            If (Toggle_ColSearch = 0)
+                Goto, SkipKeyWaitOHome
+            Keywait, z, d
+            SkipKeyWaitOHome:
+            Tooltip, , , , 4
+            Tooltip, , , , 3
+            If (LoopColor = ColorLBC)
+                Break
+            If (A_Index = 14) || (Toggle_ColSearch = 0)
+                Break
+            If (A_Index < 14)
+                Continue
+        }
+    }
+    If (ScreenShift = 1)    			; outer loop
+    {
+        If (SearchDir = "Right") && (ViewMode = "Continuous")
+            Send ^{PgDn}			; in Cont View
+        If (SearchDir = "Right") && (ViewMode = "Page")
+            Send ^{PgDn 2}			; number depends on screen size and zoom factor (*change*?)
+        If (SearchDir = "Left") && (ViewMode = "Continuous")
+            Send ^{PgUp}			; in Cont View
+        If (SearchDir = "Left")	&&  (ViewMode = "Page")
+            Send ^{PgUp 2}			; number depends on screen size and zoom factor (*change*?)
+        Sleep, 100
+        Continue
+    }
+}
+Tooltip, , , , 4				; close tooltip (4)
+Sleep, 1000
+Tooltip, , , , 3				; close tooltip (3)
+Return
+
+#MaxThreadsPerHotkey 1
+
+; ♣====================================== RESET COLOR =============================================
+
+; elements with a style button in the Inspector are reset via the Colorpicker
+
+~o & r::					; reset color note/rest - single el. or range
+CoordMode, Mouse, Screen
+MouseGetPos, StartX, StartY
+Gosub, InspectorCheck			; subroutine at end of script
+ImageSearch, , , SB_X1, SB_Y1, SB_Wide_X2, SB_Y2, *40 Statusbar_Voice1.png
+If (ErrorLevel = 1)
+{
+    ImageSearch, , , SB_X1, SB_Y1, SB_X2, SB_Y2, *40 Statusbar_Text.png
+    If (ErrorLevel = 1)
+    {
+        MsgBox, 4144, Reset Color, The color of this element`ncan't be reset.
+        Return
+    }
+    If (ErrorLevel = 0)
+    {
+        Click, %IN_012_X%, %IN_012_Y%		; I(012) color picker rectangular (black) - OVERLAP all elements
+        Sleep, 200
+        Send !h					; searchfield HTML
+        Sleep, 50
+        Send {Raw}#000000
+        Sleep, 50
+        Send {Enter}
+        Sleep, 200
+        Send {Escape}
+        Sleep, 100
+    }
+}
+If (ErrorLevel = 0) {
+    Click, %IN_013_X%, %IN_013_Y%		; I(013) Reset (012) color single element WITHOUT a Style button in Inspector
+    Sleep, 50					; hotspot overlap with Element Group - rectangle 'Set Color'
+}
+Click, %StartX%, %StartY%
+Return
+
+; ♣================================== RESET WIDTH INSPECTOR =======================================
+
+~/ & w::					; semi-auto-reset of the Inspector to the Defined Width
+CoordMode, Mouse, Screen
+MouseGetPos, StartX, StartY			; original position
+MsgBox, 4161, Reset Inspector to my Defined Width,
+(
+Layout of the Defined State
+
+Make sure that the Inspector is as narrow as possible.
+If not, drag its separator to the extreme right now!
+
+Check your preferred screen size: maximized or full.
+Finally check the presence of your favorite toolbars.
+
+If everything is ready: press OK and
+click an empty spot on the screen.
+)
+IfMsgBox, Cancel
+    Return
+Keywait, LButton, D
+Click, up
+MouseMove, % Min_Insp_Width, % A_ScreenHeight / 2	; to my found minimal (docked) Inspector width at half screen height
+Sleep, 100
+Click, Down						; drag enable
+Sleep, 50
+MouseMove, % Def_Insp_Width, % A_ScreenHeight / 2	; to my defined Inspector width at half screen height
+Click, U						; drag disable
+Send {Escape}
+MouseMove, StartX, StartY
+Return
+
+; ♣================================= GET COLOR MOUSEPOSITION ======================================
+
+~/ & q::						; get color mouseposition
+CoordMode, Mouse, Window
+CoordMode, Pixel, Window
+MouseGetPos, X, Y
+PixelGetColor, PixColor, %X%, %Y% , RGB
+MsgBox, 4160, Color of mousepositionpixel , --- The color is %PixColor% ---`n`n0x is the equivalent of #`nin the window Select Color.
+Return
+
+; ♣====================================== SUBROUTINES ==============================================
+
+InspectorCheck:
+ImageSearch, , , IM_01_X1, IM_01_Y1, IM_01_X2, IM_01_Y2, *40 IM_01_Inspector_Inspector.png
+If ErrorLevel
+{
+    MsgBox, 4112, Inspector Check, The screen is not in the defined state.`nThe macro will exit.
+    Exit
+}
+Return
+
+BackToVoice1:
+Loop, 6						; back to note/rest v1
+{
+    Sleep, 200
+    ImageSearch, , , SB_X1, SB_Y1, SB_Wide_X2, SB_Y2, *40 Statusbar_Voice1.png
+    If (ErrorLevel = 0)
+        Break
+    If (ErrorLevel = 1) {
+        Send !{left}
+        Continue
+    }
+}
+Return
